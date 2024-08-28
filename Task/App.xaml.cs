@@ -1,6 +1,8 @@
 ﻿using System.Configuration;
 using System.Data;
 using System.Windows;
+using Task.Services.Implementations;
+using Task.Services.Interfaces;
 using Task.Views;
 
 namespace Task
@@ -12,7 +14,7 @@ namespace Task
     {
         protected override void RegisterTypes(IContainerRegistry containerRegistry)
         {
-            //throw new NotImplementedException();
+            containerRegistry.RegisterSingleton<IFileService, FileService>();
         }
 
         protected override Window CreateShell()
