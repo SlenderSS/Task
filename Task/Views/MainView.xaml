@@ -3,7 +3,10 @@
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:i="http://schemas.microsoft.com/xaml/behaviors"
+        
         xmlns:local="clr-namespace:Task"
+        xmlns:inf="clr-namespace:Task.Infrastructure"
         mc:Ignorable="d"
         WindowStyle="None"
         WindowStartupLocation="CenterOwner"
@@ -23,6 +26,7 @@
             <Setter Property="Width" Value="80"/>
             <Setter Property="Height" Value="40"/>
             <Setter Property="Margin" Value="0 13 10 0"/>
+            <Setter Property="Background" Value="LightSkyBlue"/>
         </Style>
     </Window.Resources>
     
@@ -35,7 +39,9 @@
         </Grid.RowDefinitions>
         <DockPanel LastChildFill="False" Background="Transparent">
             <DockPanel.InputBindings>
-                <MouseBinding Gesture="LeftClick" Command="{Binding MoveWindowCommand}"></MouseBinding>
+                <MouseBinding 
+                    Gesture="LeftClick" 
+                    Command="{Binding MoveWindowCommand}"/>
             </DockPanel.InputBindings>
             <Button 
                 DockPanel.Dock="Right" 
@@ -71,20 +77,23 @@
             </StackPanel>
         </DockPanel>
         <DataGrid Grid.Row="2" 
+                  Name="DataGrid"
                   HeadersVisibility="None" 
                   ItemsSource="{Binding Data, Mode=TwoWay}" 
                   Margin="10"
-                  
+                  AutoGenerateColumns="True"
                   SelectedIndex="{Binding SelectedRowIndex}" 
-                  CurrentCell="{Binding CurrentCell, Mode=TwoWay}">
-           
+                 >
+            <i:Interaction.Behaviors>
+                <inf:AutoGeneratingColumnBehavior Command="{Binding AutoGeneratingColumnCommand}" />
+            </i:Interaction.Behaviors>
         </DataGrid>
         
         
         <DockPanel Grid.Row="3" LastChildFill="False">
             <StackPanel DockPanel.Dock="Right" Orientation="Horizontal">
                 <StackPanel.Resources>
-                    <Style TargetType="Button" BasedOn="{StaticResource BtnStyle3}"></Style>
+                    <Style TargetType="Button" BasedOn="{StaticResource BtnStyle3}"/>
                 </StackPanel.Resources>
                 <Button Content="Save"></Button>
                 <Button Content="Cancel"></Button>

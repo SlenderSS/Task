@@ -3,20 +3,32 @@ using System.IO;
 using System.Text;
 using System.Windows;
 using System.Windows.Controls;
+using System.Windows.Data;
 using System.Windows.Input;
-using DryIoc.ImTools;
+
 using ExcelDataReader;
 using Microsoft.Win32;
+using Microsoft.Xaml.Behaviors;
+using Task.Helpers;
+using Task.Services.Interfaces;
 
 namespace Task.ViewModels;
 
 public class MainViewModel : BindableBase
 {
+    private readonly IFileService _fileService;
+
+    #region Private fields
+
     private DataTable _data;
     private int _selectedRowIndex = -1;
-    private DataGridCellInfo _currentCell;
+
     private bool _canSave;
     private string _filePath = string.Empty;
+
+    #endregion
+
+    #region Public Properties
 
     public bool CanSave
     {
@@ -29,18 +41,15 @@ public class MainViewModel : BindableBase
         get => _data;
         set => SetProperty(ref _data, value);
     }
-    public DataGridCellInfo CurrentCell
-    {
-        get => _currentCell;
-        set => SetProperty(ref _currentCell, value);
-            
-        
-    }
+
     public int SelectedRowIndex
     {
         get => _selectedRowIndex;
         set => SetProperty(ref _selectedRowIndex, value);
     }
+
+
+    #endregion
 
     #region Commands
     public ICommand CloseCommand { get; set; }
@@ -53,11 +62,13 @@ public class MainViewModel : BindableBase
     public ICommand AddRowCommand { get; set; }
     public ICommand CopyRowCommand { get; set; }
     public ICommand RemoveRowCommand { get; set; }
-
+    public ICommand AutoGeneratingColumnCommand { get; set; }
     #endregion
 
-    public MainViewModel()
+    public MainViewModel(IFileService fileService)
     {
+        _fileService = fileService;
+
         #region Init commands
         CloseCommand = new DelegateCommand(
             () => Application.Current.Shutdown(), 
@@ -85,9 +96,9 @@ public class MainViewModel : BindableBase
             () => Data.Rows.Remove(Data.Rows[SelectedRowIndex]),
             CanDoWithRow)
             .ObservesProperty(() => SelectedRowIndex);
-        
-        
 
+
+        AutoGeneratingColumnCommand = new DelegateCommand<object>(OnAutoGeneratingColumn);
 
         #endregion
 
@@ -98,42 +109,46 @@ public class MainViewModel : BindableBase
 
     #region Private Methods
 
-    private void CopyRow()
-    {
-        ;
-    }
-
     private bool CanDoWithRow() => 
         SelectedRowIndex != -1 && SelectedRowIndex <= Data.Rows.Count - 1;
 
+    
+    private void OnAutoGeneratingColumn(object parameter)
+    {
+        if (parameter is DataGridAutoGeneratingColumnEventArgs e)
+        {
+            if (e.Column is DataGridBoundColumn boundColumn)
+            {
+                var binding = (Binding)boundColumn.Binding;
+                binding.ValidationRules.Add(new DataGridCellValitationRule());
+            }
+        }
+    }
+
     private async void ExportFile(bool isNewFile = true)
     {
-        if (isNewFile)
+        string path = string.Empty;
+
+        if (!isNewFile)
         {
-            
+            path = _filePath;
         }
-        string path = "";
-        var lines =  Data.AsEnumerable()
-            .Select(row => string.Join(",", row.ItemArray.Select(val => $"\"{val}\"")));
-
-
-        SaveFileDialog saveFileDialog = new SaveFileDialog();
-        saveFileDialog.Filter =  "Excel files (.xlsm)|*.xlsm";
-        if (saveFileDialog.ShowDialog() == true)
+        else
         {
-            path = saveFileDialog.FileName;
-            
-            await using var fs = new FileStream(path, FileMode.Truncate, FileAccess.Write);
-            await using var sw = new StreamWriter(fs);
-            foreach (var line in lines)
-                await sw.WriteLineAsync(line);
-            
-            MessageBox.Show("Export successful!","Success");
+            SaveFileDialog saveFileDialog = new SaveFileDialog();
+            saveFileDialog.Filter =  "Excel files (.xlsm)|*.xlsm";
+            if (saveFileDialog.ShowDialog() == true)
+            {
+                path = saveFileDialog.FileName;
+            }
         }
 
-       
+        _fileService.ExportFile(Data, path);
+        
+        MessageBox.Show("Export successful!","Success");
+  
     }
-    
+
     private void ImportFile()
     {
         OpenFileDialog choofdlog = new OpenFileDialog();
@@ -141,28 +156,13 @@ public class MainViewModel : BindableBase
         if (choofdlog.ShowDialog() == true)
         {
             _filePath = choofdlog.FileName;
-            
-            Encoding.RegisterProvider(CodePagesEncodingProvider.Instance);
-            
-            using var streamval = File.Open(_filePath, FileMode.Open, FileAccess.Read);
-            using var reader = ExcelReaderFactory.CreateReader(streamval);
-            var configuration = new ExcelDataSetConfiguration
-            {
-                ConfigureDataTable = _=>  new ExcelDataTableConfiguration
-                {
-                    UseHeaderRow = false
-                }
-            };
-            var dataSet = reader.AsDataSet(configuration);
-
-            if (dataSet.Tables.Count > 0)
-            {
-                Data = dataSet.Tables[0];
-                        
-            }
+            Data = _fileService.ImportFile(_filePath);
         }
     }
     
 
     #endregion
 }
+
+
+
