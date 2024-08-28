@@ -1,14 +1,9 @@
 ﻿using System.Data;
-using System.IO;
-using System.Text;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Data;
 using System.Windows.Input;
-
-using ExcelDataReader;
 using Microsoft.Win32;
-using Microsoft.Xaml.Behaviors;
 using Task.Helpers;
 using Task.Services.Interfaces;
 
@@ -16,25 +11,18 @@ namespace Task.ViewModels;
 
 public class MainViewModel : BindableBase
 {
+    #region Private Fields
+    
     private readonly IFileService _fileService;
-
-    #region Private fields
-
     private DataTable _data;
     private int _selectedRowIndex = -1;
-
-    private bool _canSave;
     private string _filePath = string.Empty;
 
     #endregion
 
     #region Public Properties
 
-    public bool CanSave
-    {
-        get => _canSave;
-        set => SetProperty(ref _canSave, value);
-    }
+
 
     public DataTable Data
     {
@@ -78,7 +66,7 @@ public class MainViewModel : BindableBase
             () => Application.Current.MainWindow.DragMove(),
             () => true);
         
-        ImportFileCommand = new DelegateCommand(ImportFile);
+        ImportFileCommand = new DelegateCommand(() => ImportFile());
         
         ExportFileCommand = new DelegateCommand( () => ExportFile());
 
@@ -99,6 +87,13 @@ public class MainViewModel : BindableBase
 
 
         AutoGeneratingColumnCommand = new DelegateCommand<object>(OnAutoGeneratingColumn);
+
+        SaveCommand = new DelegateCommand(
+            () => ExportFile(false),
+            () => Data != null).ObservesProperty(() => Data);
+        CancelCommand = new DelegateCommand(
+            () => ImportFile(true),
+            () => Data != null).ObservesProperty(() => Data);
 
         #endregion
 
@@ -125,7 +120,7 @@ public class MainViewModel : BindableBase
         }
     }
 
-    private async void ExportFile(bool isNewFile = true)
+    private void ExportFile(bool isNewFile = true)
     {
         string path = string.Empty;
 
@@ -149,19 +144,21 @@ public class MainViewModel : BindableBase
   
     }
 
-    private void ImportFile()
+    private void ImportFile(bool isThatFile = false)
     {
-        OpenFileDialog choofdlog = new OpenFileDialog();
-        choofdlog.Filter =  "Excel files (*.xls or .xlsm)|.xls;*.xlsm";
-        if (choofdlog.ShowDialog() == true)
+        if (!isThatFile)
         {
-            _filePath = choofdlog.FileName;
-            Data = _fileService.ImportFile(_filePath);
+            OpenFileDialog fileDialog = new OpenFileDialog();
+            fileDialog.Filter =  "Excel files (*.xls, .xlsx or .xlsm)|.xls;*.xlsx;*.xlsm";
+            if (fileDialog.ShowDialog() == true)
+                _filePath = fileDialog.FileName;
         }
+        
+        Data = _fileService.ImportFile(_filePath);
     }
-    
 
     #endregion
+
 }
 
 

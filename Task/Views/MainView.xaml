@@ -77,16 +77,17 @@
             </StackPanel>
         </DockPanel>
         <DataGrid Grid.Row="2" 
-                  Name="DataGrid"
                   HeadersVisibility="None" 
                   ItemsSource="{Binding Data, Mode=TwoWay}" 
                   Margin="10"
                   AutoGenerateColumns="True"
                   SelectedIndex="{Binding SelectedRowIndex}" 
                  >
+
             <i:Interaction.Behaviors>
                 <inf:AutoGeneratingColumnBehavior Command="{Binding AutoGeneratingColumnCommand}" />
             </i:Interaction.Behaviors>
+
         </DataGrid>
         
         
@@ -95,8 +96,8 @@
                 <StackPanel.Resources>
                     <Style TargetType="Button" BasedOn="{StaticResource BtnStyle3}"/>
                 </StackPanel.Resources>
-                <Button Content="Save"></Button>
-                <Button Content="Cancel"></Button>
+                <Button Content="Save" Command="{Binding SaveCommand}"/>
+                <Button Content="Cancel" Command="{Binding CancelCommand}"/>
             </StackPanel>
         </DockPanel>
     </Grid>

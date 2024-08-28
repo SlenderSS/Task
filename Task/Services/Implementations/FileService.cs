@@ -12,23 +12,32 @@ public class FileService : IFileService
     public DataTable ImportFile(string path)
     {
         Encoding.RegisterProvider(CodePagesEncodingProvider.Instance);
-            
-        using var streamval = File.Open(path, FileMode.Open, FileAccess.Read);
-        using var reader = ExcelReaderFactory.CreateReader(streamval);
-        var configuration = new ExcelDataSetConfiguration
+
+        try
         {
-            ConfigureDataTable = _ =>  new ExcelDataTableConfiguration
+            using var streamval = File.Open(path, FileMode.Open, FileAccess.Read);
+            using var reader = ExcelReaderFactory.CreateReader(streamval);
+            var configuration = new ExcelDataSetConfiguration
             {
-                UseHeaderRow = false
+                ConfigureDataTable = _ =>  new ExcelDataTableConfiguration
+                {
+                    UseHeaderRow = false
+                }
+            };
+            var dataSet = reader.AsDataSet(configuration);
+
+            if (dataSet.Tables.Count > 0)
+            {
+                return dataSet.Tables[0];
             }
-        };
-        var dataSet = reader.AsDataSet(configuration);
 
-        if (dataSet.Tables.Count > 0)
-        {
-            return dataSet.Tables[0];
         }
-
+        catch (Exception e)
+        {
+            Console.WriteLine(e);
+            throw;
+        }
+        
         return new DataTable();
     }
 
