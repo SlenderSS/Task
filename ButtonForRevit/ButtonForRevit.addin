@@ -1,0 +1,11 @@
+﻿<?xml version="1.0" encoding="utf-8" standalone="no"?>
+<RevitAddIns>
+	<AddIn Type="Application">
+		<Name>Button For Revit</Name>
+		<Assembly>ButtonForRevit.dll</Assembly>
+		<AddInId>A7FC0BAD-120B-44EE-BB70-DEB760968E3B</AddInId>
+		<FullClassName>ButtonForRevit.Application</FullClassName>
+		<VendorId>Alex Olkhvoyk</VendorId>
+		<VendorDescription>https://github.com/SlenderSS</VendorDescription>
+	</AddIn>
+</RevitAddIns>
